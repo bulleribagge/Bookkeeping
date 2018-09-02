@@ -1,6 +1,6 @@
 <template>
     <div id="app">
-        <form>
+        <form id="uploadForm" v-if="!doneUploading">
             <h1>Ladda upp dina filer</h1>
             <div class="dropbox">
                 <input type="file" multiple name="files" ref="files" accept="text/plain" v-on:change="handleFilesUpload()" class="input-file">
@@ -12,6 +12,69 @@
                 </p>
             </div>
         </form>
+        <div v-if="doneUploading">
+            <h1>
+                Transaktioner
+            </h1>
+            <table>
+                <thead>
+                    <tr>
+                        <th>
+                            Datum
+                        </th>
+                        <th>
+                            Typ
+                        </th>
+                        <th>
+                            Namn
+                        </th>
+                        <th>
+                            Belopp inkl moms
+                        </th>
+                        <th>
+                            Belopp exl moms
+                        </th>
+                        <th>
+                            Fakturanummer
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(transaction, index) in transactions">
+                        <td>
+                            {{transaction.registerDate | shortDate}}
+                        </td>
+                        <td>
+                            {{transaction.transactionType}}
+                        </td>
+                        <td>
+                            {{transaction.reference}}
+                        </td>
+                        <td>
+                            {{transaction.amount}}
+                        </td>
+                        <td>
+                            <span v-if="transaction.transactionType === 'SWISH'">
+                                {{transaction.amountExludingVAT}}
+                            </span>
+                        </td>
+                        <td>
+                            {{year + (parseInt(firstInvoiceNumber) + index)}}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <hr />
+            <div id="inputDiv">
+                <div>
+                    <label for="year">Ange år: </label><input type="text" name="year" id="year" v-model="year" class="smallInput" />
+                </div>
+                <div>
+                    <label for="firstInvoiceNumber">Ange första fakturanummer: </label> <input type="text" name="firstInvoiceNumber" id="firstInvoiceNumber" v-model="firstInvoiceNumber" class="smallInput" />
+                </div>
+                    <div class="clearFix"></div>
+                </div>
+        </div>
     </div>
 </template>
 <script>
@@ -22,7 +85,11 @@
         data() {
             return {
                 files: '',
-                disabled: false
+                disabled: false,
+                doneUploading: false,
+                transactions: [],
+                year: 0,
+                firstInvoiceNumber: 0
             }
         },
 
@@ -36,7 +103,7 @@
                     let file = this.files[i];
                     formData.append('files' + i, file);
                 }
-                
+                let self = this;
                 axios.post('/processfiles',
                     formData,
                     {
@@ -45,10 +112,12 @@
                         }
                     }
                 ).then(function (res) {
-                    console.log('SUCCESS!! ', res);
+                    console.table(res.data);
+                    self.doneUploading = true;
+                    self.transactions = res.data;
                 })
                 .catch(function (e) {
-                    console.log('FAILURE!! ' + e.message);
+                    console.log('Error ' + e.message);
                 });
             },
 
@@ -91,4 +160,30 @@
         text-align: center;
         padding: 50px 0;
     }
+
+    table td, th {
+        padding: 5px;
+    }
+
+    table{
+        margin-bottom: 20px;
+    }
+
+    .smallInput{
+        width: 50px;
+        float: right;
+    }
+
+    #inputDiv{
+        width: 300px;
+    }
+
+    #inputDiv div{
+        margin: 1px;
+    }
+
+    .clearFix{
+        clear:both;
+    }
+
 </style>

@@ -37,8 +37,8 @@ namespace Bookkeeping.Controllers
             {
                 var filePath = Path.GetTempPath();
 
-                var swishFilePath = Path.Combine(filePath, "swish_" + DateTime.Now.ToShortDateString() + ".txt");
-                var transFilePath = Path.Combine(filePath, "trans_" + DateTime.Now.ToShortDateString() + ".txt");
+                var swishFilePath = Path.Combine(filePath, "swish_" + DateTime.Now.ToShortDateString().Replace('/', '_') + ".txt");
+                var transFilePath = Path.Combine(filePath, "trans_" + DateTime.Now.ToShortDateString().Replace('/', '_') + ".txt");
 
                 foreach (var file in files)
                 {
@@ -77,14 +77,15 @@ namespace Bookkeeping.Controllers
                 {
                     var strParts = new List<string>(swishLines[i].Split('\t')).Where(t => !String.IsNullOrWhiteSpace(t));
 
-                    var row = new SwishRow
+                    var row = new Row
                     {
-                        Bokföringsdag = DateTime.Parse(strParts.ElementAt(3)),
-                        Transaktionsdag = DateTime.Parse(strParts.ElementAt(4) + " " + strParts.ElementAt(10)),
-                        Valutadag = DateTime.Parse(strParts.ElementAt(5)),
-                        Belopp = decimal.Parse(strParts.ElementAt(11)),
-                        Avsändarnamn = strParts.ElementAt(9),
-                        Avsändarnummer = strParts.ElementAt(8)
+                        RegisterDate = DateTime.Parse(strParts.ElementAt(3)),
+                        TransactionDate = DateTime.Parse(strParts.ElementAt(4) + " " + strParts.ElementAt(10)),
+                        CurrencyDate = DateTime.Parse(strParts.ElementAt(5)),
+                        Amount = decimal.Parse(strParts.ElementAt(11)),
+                        Reference = strParts.ElementAt(9),
+                        PhoneNumber = strParts.ElementAt(8),
+                        TransactionType = "SWISH"
                     };
 
                     rows.Add(row);
@@ -94,21 +95,23 @@ namespace Bookkeeping.Controllers
                 {
                     var strParts = new List<string>(transLines[i].Split('\t')).Where(t => !String.IsNullOrWhiteSpace(t));
 
-                    var row = new TransactionRow
+                    var row = new Row
                     {
-                        Bokföringsdag = DateTime.Parse(strParts.ElementAt(5)),
-                        Transaktionsdag = DateTime.Parse(strParts.ElementAt(6)),
-                        Valutadag = DateTime.Parse(strParts.ElementAt(7)),
-                        Belopp = decimal.Parse(strParts.ElementAt(10)),
-                        Referens = strParts.ElementAt(8),
-                        Text = strParts.ElementAt(9),
+                        RegisterDate = DateTime.Parse(strParts.ElementAt(5)),
+                        TransactionDate = DateTime.Parse(strParts.ElementAt(6)),
+                        CurrencyDate = DateTime.Parse(strParts.ElementAt(7)),
+                        Amount = decimal.Parse(strParts.ElementAt(10)),
+                        Reference = strParts.ElementAt(8),
+                        TransactionType = strParts.ElementAt(9),
                     };
 
-                    if (!row.Text.StartsWith("Swish"))
+                    if (!row.TransactionType.StartsWith("Swish"))
                     {
                         rows.Add(row);
                     }
                 }
+
+                rows = rows.OrderBy(x => x.RegisterDate).ToList();
 
                 return Ok(rows);
             }else

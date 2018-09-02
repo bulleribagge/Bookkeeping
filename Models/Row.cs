@@ -1,15 +1,16 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Bookkeeping.Models
 {
     public class Row
     {
-        public DateTime Bokföringsdag { get; set; }
-        public DateTime Transaktionsdag { get; set; }
-        public DateTime Valutadag { get; set; }
-        public decimal Belopp { get; set; }
+        public DateTime RegisterDate { get; set; }
+        public DateTime TransactionDate { get; set; }
+        public DateTime CurrencyDate { get; set; }
+        public decimal Amount { get; set; }
+        public string TransactionType { get; set; }
+        public string Reference { get; set; }
+        public string PhoneNumber { get; set; }
+        public decimal AmountExludingVAT => Amount / 1.25M;
     }
 }
